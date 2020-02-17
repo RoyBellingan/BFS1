@@ -125,19 +125,30 @@ int main() {
     }
 
     CALLGRIND_START_INSTRUMENTATION;
-        {
-            auto t1 = nanotime();
-            bfs1.resolve(4);
-            auto t2 = nanotime();
-            std::cout << "elapsed " << t2 - t1 << "\n";
-        }
+//        {
+//            auto t1 = nanotime();
+//            bfs1.resolve(4);
+//            auto t2 = nanotime();
+//            std::cout << "elapsed " << t2 - t1 << "\n";
+//        }
     {
         auto t1 = nanotime();
         bfs1.resolve(95);
         auto t2 = nanotime();
         std::cout << "elapsed " << t2 - t1 << "\n";
     }
-
+//    {
+//        auto t1 = nanotime();
+//        bfs1.resolve(95);
+//        auto t2 = nanotime();
+//        std::cout << "elapsed " << t2 - t1 << "\n";
+//    }
+//    {
+//        auto t1 = nanotime();
+//        bfs1.resolve(5);
+//        auto t2 = nanotime();
+//        std::cout << "elapsed " << t2 - t1 << "\n";
+//    }
     std::ios::sync_with_stdio(true);
     uint pos = 0;
         for (auto line : visT1->distanceMap) {
