@@ -34,7 +34,7 @@ class Vertex {
  */
 class Visitor {
       public:
-    virtual void examineVertex(Vertex* vertex);
+    virtual bool examineVertex(Vertex* vertex);
     virtual void examineEdge(Vertex* parent, Vertex* child);
     virtual void treeEdge(Vertex* parent, Vertex* child) ;
     virtual void discoverVertex(Vertex* vertex);

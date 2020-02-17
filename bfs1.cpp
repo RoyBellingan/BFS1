@@ -32,7 +32,12 @@ void BFS1::resolve(uint64_t IdStart, uint64_t maxIteration, bool forward) {
         Vertex* parent = q.front();
         q.pop();
 
-        call(examineVertex(parent));
+        if (visitor) {
+            bool ok = visitor->examineVertex(parent);
+            if(!ok){
+                continue;
+            }
+        }
 
         for (Vertex* child : parent->childs) {
 
@@ -71,8 +76,9 @@ void BFS1::start(uint64_t IdStart) {
     q.push(v);
 }
 
-void Visitor::examineVertex(Vertex* vertex) {
+bool Visitor::examineVertex(Vertex* vertex) {
     (void)vertex;
+    return true;
 }
 
 void Visitor::examineEdge(Vertex* parent, Vertex* child) {
