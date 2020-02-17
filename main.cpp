@@ -9,6 +9,8 @@
 #include <map>
 #include <string>
 
+#include "bfs1.h"
+
 using namespace boost;
 
 //struct my_visitor : boost::default_bfs_visitor{
@@ -48,7 +50,7 @@ template <typename DistanceMap, typename ColorMap>
 class bacon_number_recorder : public default_bfs_visitor {
       public:
     bacon_number_recorder(DistanceMap dist, ColorMap map)
-              : distanceMap(dist), colorMap(map) {
+        : distanceMap(dist), colorMap(map) {
     }
 
     template <typename Edge, typename Graph>
@@ -61,30 +63,9 @@ class bacon_number_recorder : public default_bfs_visitor {
         distanceMap[v] = distanceMap[u] + 1;
     }
 
-    template <typename Vertex, typename Graph>
-    void examine_vertex(Vertex v, const Graph& g) const {
-
-        (void) g;
-        //r is invoked in each vertex as it is removed from the queue.
-        //In short if this vertex is already have a certain weight set as black (already traversed) to break
-        //the traversing .
-        typedef typename property_traits<ColorMap>::value_type ColorValue;
-        typedef color_traits<ColorValue> Color;
-
-//        if(distanceMap[v] > maxNum){
-//            auto black = Color::black();
-//            //colorMap[v] = black;
-
-//        }
-
-        //auto vv = g[v] ;
-
-        //int x = 0;
-    }
-
       private:
-    DistanceMap distanceMap;
-    mutable ColorMap    colorMap;
+    DistanceMap      distanceMap;
+    mutable ColorMap colorMap;
 };
 
 // Convenience function
@@ -94,7 +75,25 @@ record_bacon_number(DistanceMap d, ColorMap colorMap) {
     return bacon_number_recorder<DistanceMap, ColorMap>(d, colorMap);
 }
 
+//OOP win over template madness IMHO
+class VertexName : public BFS::Vertex {
+      public:
+    std::string name;
+};
+
+class VisitorT1 : public BFS::Visitor{
+public:
+    std::unordered_map<uint64_t,uint64_t> distanceMap;
+    void treeEdge(BFS::Vertex *parent, BFS::Vertex *child){
+        distanceMap[child->dbId] = distanceMap[parent->dbId] + 1;
+    }
+};
+
 int main() {
+    BFS::BFS1 bfs1;
+    auto visT1 = new VisitorT1();
+    bfs1.visitor = visT1;
+
     //I do not like this file layout, but is ok for this small test
     std::ifstream datafile("./kevin-bacon.dat");
     if (!datafile) {
@@ -132,12 +131,21 @@ int main() {
         bool                            inserted;
         Vertex                          u, v;
         boost::tie(pos, inserted) = actors.insert(std::make_pair(actors_name, Vertex()));
+        VertexName *v1 = nullptr, *v2 = nullptr;
         if (inserted) {
             u             = add_vertex(g);
             actor_name[u] = actors_name;
             pos->second   = u;
-        } else
-            u = pos->second;
+
+            v1       = new VertexName();
+            v1->name = actors_name;
+            v1->dbId = pos->second;
+            bfs1.graph.insert({pos->second, v1});
+        } else {
+            //No idea why this promotion is required
+            v1 = static_cast<VertexName*>(bfs1.graph.at(pos->second));
+            u  = pos->second;
+        }
 
         std::string movie_name = *i++;
 
@@ -146,14 +154,29 @@ int main() {
             v             = add_vertex(g);
             actor_name[v] = *i;
             pos->second   = v;
-        } else
-            v = pos->second;
+
+            v2       = new VertexName();
+            v2->name = movie_name;
+            v2->dbId = pos->second;
+            bfs1.graph.insert({pos->second, v2});
+        } else {
+            v  = pos->second;
+            v2 = static_cast<VertexName*>(bfs1.graph.at(pos->second));
+        }
+
+        //dual indexing power supreme
+        v1->parents.push_back(v2);
+        v2->childs.push_back(v1);
 
         graph_traits<Graph>::edge_descriptor e;
         boost::tie(e, inserted) = add_edge(u, v, g);
         if (inserted)
             connecting_movie[e] = movie_name;
     }
+//    for (auto line : bfs1.graph) {
+//        auto check = static_cast<VertexName*>(line.second);
+//        std::cout << check->name << " @ " << line.first <<"\n";
+//    }
 
     std::vector<int> bacon_number(num_vertices(g));
 
@@ -169,15 +192,22 @@ int main() {
     breadth_first_search(g, src,
                          visitor(record_bacon_number(&bacon_number[0], &colorMap)));
 
-//    breadth_first_search(g,
-//                         src,
-//                         Q,
-//                         record_bacon_number(&bacon_number[0], &colorMap));
+    //    breadth_first_search(g,
+    //                         src,
+    //                         Q,
+    //                         record_bacon_number(&bacon_number[0], &colorMap));
 
     graph_traits<Graph>::vertex_iterator i, end;
     for (boost::tie(i, end) = vertices(g); i != end; ++i) {
         std::cout << actor_name[*i] << " has a Bacon number of "
                   << bacon_number[*i] << std::endl;
+    }
+
+    bfs1.resolve(2);
+    for(auto line : visT1->distanceMap){
+        auto v = static_cast<VertexName*>(bfs1.graph.at(line.first));
+        std::cout << v->name << " has a Bacon number of "
+                  << line.second << "\n";
     }
 
     return 0;

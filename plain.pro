@@ -16,3 +16,7 @@ HEADERS += \
     date.h
 
 QMAKE_CXXFLAGS += -msse4.2 -O0
+
+QMAKE_CXXFLAGS+= -fsanitize=address -fno-omit-frame-pointer
+QMAKE_CFLAGS+= -fsanitize=address -fno-omit-frame-pointer
+QMAKE_LFLAGS+= -fsanitize=address -fno-omit-frame-pointer

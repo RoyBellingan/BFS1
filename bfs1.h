@@ -3,9 +3,11 @@
 
 #include <queue>
 #include <stdint.h>
+#include <unordered_map>
 
+namespace BFS {
 
-enum class Color{
+enum class Color {
     white = 0,
     grey,
     black
@@ -13,31 +15,36 @@ enum class Color{
 
 //forward declare to have the typedef
 class Vertex;
-typedef std::vector<Vertex*> Graph;
 
+//BFS do not care of name, database Id is all we need here
+typedef std::unordered_map<uint64_t, Vertex*> Graph;
+//child are all the same, right ?
+typedef std::vector<Vertex*> Related;
 
-class Vertex{
-public:
-    Graph childs;
-    Graph parents;
-    uint64_t dbId;
-    Color color;
-
+class Vertex {
+      public:
+    Related  childs;
+    Related  parents;
+    Color    color = Color::white;
+    uint64_t dbId  = 0;
 };
-
 
 /**
  * @brief The BFS1Observer class
  */
-class BFS1Observer {
-public:
-    void examineVertex(Vertex* vertex);
-    void examineEdge(Vertex* parent, Vertex* child);;
-    void treeEdge(Vertex* parent, Vertex* child);;
+class Visitor {
+      public:
+    virtual void examineVertex(Vertex* vertex);
+    virtual void examineEdge(Vertex* parent, Vertex* child);
+    virtual void treeEdge(Vertex* parent, Vertex* child) ;
+    virtual void discoverVertex(Vertex* vertex);
+    virtual void nonTreeEdge(Vertex* parent, Vertex* child);
+    virtual void grayTarget(Vertex* parent, Vertex* child);
+    virtual void blackTarget(Vertex* parent, Vertex* child);
+    virtual void finishVertex(Vertex* parent);
 };
 
-struct ChainResult{
-
+struct ChainResult {
 };
 
 class BFS1 {
@@ -51,13 +58,19 @@ class BFS1 {
      * @param forward from parent to child
      * @return the list of Vertex in order
      */
-    Graph getChain(uint64_t IdStart, uint64_t IdEnd, uint64_t maxDepth, bool forward = true);
+    void resolve(uint64_t IdStart,
+                     uint64_t maxIteration = 0, bool forward = true);
     //TODO get all possible chain ???
-private:
-    Graph graph;
-    BFS1Observer* observer;
+    Graph        graph;
+    Visitor* visitor = nullptr;
+
+      private:
     //64bit and you avoid problem
-    std::queue<uint64_t> q;
+    std::queue<Vertex*> q;
+    void                 whiteWash();
+    void                 start(uint64_t IdStart);
 };
+
+} // namespace BFS
 
 #endif // BFS1_H
