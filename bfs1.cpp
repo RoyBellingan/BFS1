@@ -31,6 +31,7 @@ void BFS1::resolve(uint64_t IdStart, uint64_t maxIteration, bool forward) {
 
         Vertex* parent = q.front();
         q.pop();
+        dirtyVertex.push_back(parent);
 
         if (visitor) {
             bool ok = visitor->examineVertex(parent);
@@ -63,8 +64,8 @@ void BFS1::resolve(uint64_t IdStart, uint64_t maxIteration, bool forward) {
 }
 
 void BFS1::whiteWash() {
-    for (auto&& line : graph) {
-        line.second->color = Color::white;
+    for (auto&& line : dirtyVertex) {
+        line->color = Color::white;
     }
 }
 

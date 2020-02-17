@@ -7,6 +7,8 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <valgrind/callgrind.h>
+
 double nanotime() {
     return (double(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count()) / double(1000000000));
 }
@@ -20,49 +22,78 @@ class VertexName : public BFS::Vertex {
 
 class VisitorT1 : public BFS::Visitor {
       public:
-    std::unordered_map<uint64_t,uint16_t> distanceMap;
+    std::vector<uint64_t> distanceMap;
+    //std::unordered_map<uint64_t,uint64_t> distanceMap;
     bool terminate = false;
     VisitorT1() {
-        distanceMap.reserve(50000);
+        //distanceMap.reserve(50000);
+        distanceMap.resize(60042099);
     }
 
-    bool examineVertex(BFS::Vertex *vertex) override{
+    bool examineVertex(BFS::Vertex* vertex) override {
+        (void)vertex;
         return !terminate;
     }
 
-    void treeEdge(BFS::Vertex* parent, BFS::Vertex* child) {
-        auto cur = distanceMap[parent->dbId] + 1;
-        distanceMap[child->dbId] = distanceMap[parent->dbId] + 1;
-        if(cur > 5){
-            terminate = true;
-        }
+    void treeEdge(BFS::Vertex* parent, BFS::Vertex* child) override {
+        auto cur                 = distanceMap[parent->dbId] + 1;
+        distanceMap[child->dbId] = cur;
+                if (cur > 12) {
+                    terminate = true;
+                }
     }
 };
+
+uint64_t nonInsanelySlowStringToUint(const char* p) {
+    uint64_t x   = 0;
+    bool     neg = false;
+    if (*p == '-') {
+        neg = true;
+        ++p;
+    }
+    while (*p >= '0' && *p <= '9') {
+        x = (x * 10) + (*p - '0');
+        ++p;
+    }
+    if (neg) {
+        x = -x;
+    }
+    return x;
+}
+
+std::pair<uint64_t, uint64_t> split(std::string& line) {
+    std::string_view view = line;
+    auto             pos  = line.find(',');
+    auto             a    = view.substr(0, pos);
+    auto             b    = view.substr(pos + 1);
+    auto             ad   = nonInsanelySlowStringToUint(a.data());
+    auto             bd   = nonInsanelySlowStringToUint(b.data());
+    return std::pair{ad, bd};
+}
 
 int main() {
     BFS::BFS1 bfs1;
     auto      visT1 = new VisitorT1();
     bfs1.visitor    = visT1;
 
-    //std::ifstream datafile("/tmp/kw1.csv");
-    std::ifstream datafile("/home/roy/kw2.csv");
+    //no idea but without is much slower
+    std::ios::sync_with_stdio(false);
+    std::ifstream datafile("/tmp/kw1.csv");
+    //std::ifstream datafile("/home/roy/kw2.csv");
     if (!datafile) {
         std::cerr << "No /tmp/kw1.csv file" << std::endl;
         return EXIT_FAILURE;
     }
 
-
-    uint64_t maxId = 1000000;
+    uint64_t maxId = 0;
     for (std::string line; std::getline(datafile, line);) {
-        static char_delimiters_separator<char> sep(false, ",", ",");
-        tokenizer<>                            line_toks(line, sep);
-        tokenizer<>::iterator                  i        = line_toks.begin();
-        uint64_t                               parentId = std::atoll(i->data());
-        i++;
-        uint64_t childId = std::atoll(i->data());
+        auto v = split(line);
 
-        if(parentId > maxId){
-            continue;
+        uint64_t parentId = v.first;
+        uint64_t childId  = v.second;
+
+        if (maxId && parentId > maxId) {
+            break;
         }
 
         VertexName *v1 = nullptr, *v2 = nullptr;
@@ -93,12 +124,38 @@ int main() {
         v2->parents.push_back(v1);
     }
 
-    bfs1.resolve(4);
-        for (auto line : visT1->distanceMap) {
-            auto v = static_cast<VertexName*>(bfs1.graph.at(line.first));
-            std::cout << v->dbId << " has a Bacon number of "
-                      << line.second << "\n";
+    CALLGRIND_START_INSTRUMENTATION;
+        {
+            auto t1 = nanotime();
+            bfs1.resolve(4);
+            auto t2 = nanotime();
+            std::cout << "elapsed " << t2 - t1 << "\n";
         }
+    {
+        auto t1 = nanotime();
+        bfs1.resolve(95);
+        auto t2 = nanotime();
+        std::cout << "elapsed " << t2 - t1 << "\n";
+    }
+
+    std::ios::sync_with_stdio(true);
+    uint pos = 0;
+        for (auto line : visT1->distanceMap) {
+            if(line == 0){
+                pos++;
+                continue;
+            }
+            auto v = static_cast<VertexName*>(bfs1.graph.at(pos));
+            std::cout << v->dbId << " has a Bacon number of "
+                      << line << "\n";
+            pos++;
+        }
+
+//            for (auto line : visT1->distanceMap) {
+//                auto v = static_cast<VertexName*>(bfs1.graph.at(line.first));
+//                std::cout << v->dbId << " has a Bacon number of "
+//                          << line.second << "\n";
+//            }
 
     return 0;
 }

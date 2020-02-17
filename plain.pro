@@ -18,8 +18,8 @@ HEADERS += \
     date.h
 
 #QMAKE_CXXFLAGS += -O0
-QMAKE_CXXFLAGS += -march=native
-QMAKE_CXXFLAGS += -O3 -flto -fuse-ld=gold -fuse-linker-plugin
+QMAKE_CXXFLAGS += -g -march=native
+QMAKE_CXXFLAGS += -O3  -flto -fuse-ld=gold -fuse-linker-plugin
 
 #QMAKE_CXXFLAGS+= -fsanitize=address -fno-omit-frame-pointer
 #QMAKE_CFLAGS+= -fsanitize=address -fno-omit-frame-pointer

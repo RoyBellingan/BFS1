@@ -67,6 +67,8 @@ class BFS1 {
       private:
     //64bit and you avoid problem
     std::queue<Vertex*> q;
+    //Vertex that have been processed, and the color has been changed and need to be reset
+    std::vector<Vertex*> dirtyVertex;
     void                 whiteWash();
     void                 start(uint64_t IdStart);
 };
