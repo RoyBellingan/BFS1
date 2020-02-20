@@ -17,7 +17,10 @@ enum class Color {
 class Vertex;
 
 //BFS do not care of name, database Id is all we need here
-typedef std::unordered_map<uint64_t, Vertex*> Graph;
+//typedef std::unordered_map<uint64_t, Vertex*> Graph;
+
+typedef std::vector<Vertex*> Graph;
+
 //child are all the same, right ?
 typedef std::vector<Vertex*> Related;
 

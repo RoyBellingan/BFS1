@@ -15,6 +15,10 @@ using namespace BFS;
 BFS1::BFS1() {
     Vertex v1;
     v1.color = Color::grey;
+
+    graph.resize(60042099);
+
+    //graph.reserve(1000000);
 }
 
 void BFS1::resolve(uint64_t IdStart, uint64_t maxIteration, bool forward) {
