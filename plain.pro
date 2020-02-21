@@ -8,8 +8,7 @@ CONFIG += console c++17
 
 SOURCES += \
         bfs1.cpp \
-        main.cpp \
-        oldMain.cpp
+        main.cpp
 
 
 LIBS += -ljemalloc
@@ -19,9 +18,10 @@ HEADERS += \
     bfs1.h \
     date.h
 
-#QMAKE_CXXFLAGS += -O0
+
 QMAKE_CXXFLAGS += -g -march=native
-QMAKE_CXXFLAGS += -O3 -flto -fuse-ld=gold -fuse-linker-plugin
+QMAKE_CXXFLAGS += -O0
+#QMAKE_CXXFLAGS += -O3 -flto -fuse-ld=gold -fuse-linker-plugin
 #QMAKE_CXXFLAGS += -fprofile-dir=/tmp/pgo -fprofile-generate=/tmp/pgo
 #LIBS += -lgcov --coverage
 #QMAKE_CXXFLAGS += -fprofile-use=/tmp/pgo -fprofile-correction

@@ -8,114 +8,117 @@ using namespace BFS;
  * clang format place the \ in wild position
 */
 #define call(val)             \
-    if ((visitor)) {      \
-        visitor->val; \
-    }
+	if ((visitor)) {      \
+		visitor->val; \
+	}
 
 BFS1::BFS1() {
-    Vertex v1;
-    v1.color = Color::grey;
-
-    graph.resize(60042099);
-
-    //graph.reserve(1000000);
+	Vertex v1;
+	v1.color = Color::grey;
+	//a mere 800mb for now
+	//graph.resize(120000000);
+	graph.resize(1000);
 }
 
-void BFS1::resolve(uint64_t IdStart, uint64_t maxIteration, bool forward) {
-    start(IdStart);
+void BFS1::resolve(uint64_t IdStart, bool forward) {
+	this->forward = forward;
+	start(IdStart);
 
-    //taken from boost::graph::breadth_first_search:75
-    //iteracion limiter is practically the only addition
-    uint64_t iteration = 0;
-    while (!q.empty()) {
-        if(maxIteration && iteration > maxIteration){
-            break;
-        }
-        iteration++;
+	//taken from boost::graph::breadth_first_search:75
+	//iteracion limiter is practically the only addition
+	while (!q.empty()) {
+		Vertex* node = q.front();
+		q.pop();
+		dirtyVertex.push_back(node);
 
-        Vertex* parent = q.front();
-        q.pop();
-        dirtyVertex.push_back(parent);
+		call(examineVertex(node));
 
-        if (visitor) {
-            bool ok = visitor->examineVertex(parent);
-            if(!ok){
-                continue;
-            }
-        }
+		auto& iterateMe = node->childs;
+		if (!forward) {
+			iterateMe = node->parents;
+		}
 
-        for (Vertex* child : parent->childs) {
+		for (Vertex* leaf : iterateMe) {
+			if (terminate) {
+				break;
+			}
+			call(examineEdge(node, leaf));
 
-            call(examineEdge(parent, child));
+			if (leaf->color == Color::white) {
+				call(treeEdge(node, leaf));
+				leaf->color = Color::grey;
+				call(discoverVertex(leaf));
+				q.push(leaf);
+			} else {
+				call(nonTreeEdge(node, leaf));
+				if (leaf->color == Color::grey) {
+					call(grayTarget(node, leaf));
+				} else {
+					call(blackTarget(node, leaf));
+				}
+			}
+		} // end for
+		node->color = Color::black;
+		call(finishVertex(node));
+	} // end while
+}
 
-            if (child->color == Color::white) {
-                call(treeEdge(parent, child));
-                child->color = Color::grey;
-                call(discoverVertex(child));
-                q.push(child);
-            } else {
-                call(nonTreeEdge(parent, child));
-                if (child->color == Color::grey) {
-                    call(grayTarget(parent, child));
-                } else {
-                    call(blackTarget(parent, child));
-                }
-            }
-        } // end for
-        parent->color = Color::black;
-        call(finishVertex(parent));
-    }// end while
+Visitor* BFS1::getVisitor() const {
+	return visitor;
+}
+
+void BFS1::setVisitor(Visitor* value) {
+	visitor       = value;
+	visitor->bfs1 = this;
 }
 
 void BFS1::whiteWash() {
-    for (auto&& line : dirtyVertex) {
-        line->color = Color::white;
-    }
+	for (auto&& line : dirtyVertex) {
+		line->color = Color::white;
+	}
 }
 
 void BFS1::start(uint64_t IdStart) {
-    whiteWash();
-    auto v   = graph.at(IdStart);
-    v->color = Color::grey;
-    call(discoverVertex(v));
-    q.push(v);
+	whiteWash();
+	auto v   = graph.at(IdStart);
+	v->color = Color::grey;
+	call(discoverVertex(v));
+	q.push(v);
 }
 
-bool Visitor::examineVertex(Vertex* vertex) {
-    (void)vertex;
-    return true;
+void Visitor::examineVertex(Vertex* vertex) {
+	(void)vertex;
 }
 
 void Visitor::examineEdge(Vertex* parent, Vertex* child) {
-    (void)parent;
-    (void)child;
+	(void)parent;
+	(void)child;
 }
 
 void Visitor::treeEdge(Vertex* parent, Vertex* child) {
-    (void)parent;
-    (void)child;
+	(void)parent;
+	(void)child;
 }
 
 void Visitor::discoverVertex(Vertex* vertex) {
-    (void)vertex;
+	(void)vertex;
 }
 
 void Visitor::nonTreeEdge(Vertex* parent, Vertex* child) {
-    (void)parent;
-    (void)child;
+	(void)parent;
+	(void)child;
 }
 
 void Visitor::grayTarget(Vertex* parent, Vertex* child) {
-    (void)parent;
-    (void)child;
+	(void)parent;
+	(void)child;
 }
 
 void Visitor::blackTarget(Vertex* parent, Vertex* child) {
-    (void)parent;
-    (void)child;
+	(void)parent;
+	(void)child;
 }
 
-void Visitor::finishVertex(Vertex *parent)
-{
-    (void)parent;
+void Visitor::finishVertex(Vertex* parent) {
+	(void)parent;
 }
